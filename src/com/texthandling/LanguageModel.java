@@ -3,17 +3,17 @@ package com.texthandling;
 import java.util.*;
 
 /**
- * Created by Ильнар on 21.04.2015.
+ * Created by РР»СЊРЅР°СЂ on 21.04.2015.
  */
 public class LanguageModel {
 
-    //    мерность n-граммов
+    //    РјРµСЂРЅРѕСЃС‚СЊ n-РіСЂР°РјРјРѕРІ
     public static int N = 3;
 
-    //    список всех встречающихся слов
+    //    СЃРїРёСЃРѕРє РІСЃРµС… РІСЃС‚СЂРµС‡Р°СЋС‰РёС…СЃСЏ СЃР»РѕРІ
     Map<String, Integer> wordMap = new LinkedHashMap<String, Integer>();
 
-    //    список всех n-граммов
+    //    СЃРїРёСЃРѕРє РІСЃРµС… n-РіСЂР°РјРјРѕРІ
     Map<Long, NGram> grams = new HashMap<Long, NGram>();
 
     public void create(String input) {
@@ -60,19 +60,19 @@ public class LanguageModel {
         String test = builder.toString();
         String[] words = test.split(" ");
 
-//        заполение списка слов
+//        Р·Р°РїРѕР»РµРЅРёРµ СЃРїРёСЃРєР° СЃР»РѕРІ
         for (String word : words) {
             if (!wordMap.containsKey(word)) {
                 wordMap.put(word, wordMap.size());
             }
         }
-//        построение модели
+//        РїРѕСЃС‚СЂРѕРµРЅРёРµ РјРѕРґРµР»Рё
         initGrams(words);
         System.out.println("\nLanguage model created");
     }
 
     /**
-     * Завершает высказывание исходя из языковой модели (пустое слово помечено как '?????')
+     * Р—Р°РІРµСЂС€Р°РµС‚ РІС‹СЃРєР°Р·С‹РІР°РЅРёРµ РёСЃС…РѕРґСЏ РёР· СЏР·С‹РєРѕРІРѕР№ РјРѕРґРµР»Рё (РїСѓСЃС‚РѕРµ СЃР»РѕРІРѕ РїРѕРјРµС‡РµРЅРѕ РєР°Рє '?????')
      *
      * @param template
      * @return
@@ -90,7 +90,7 @@ public class LanguageModel {
     }
 
     /**
-     * Находит все n-граммы подходящие под данное высказывание
+     * РќР°С…РѕРґРёС‚ РІСЃРµ n-РіСЂР°РјРјС‹ РїРѕРґС…РѕРґСЏС‰РёРµ РїРѕРґ РґР°РЅРЅРѕРµ РІС‹СЃРєР°Р·С‹РІР°РЅРёРµ
      *
      * @param template
      * @return

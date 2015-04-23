@@ -1,7 +1,7 @@
 package com.texthandling;
 
 /**
- * Created by Θλόνΰπ on 21.04.2015.
+ * Created by ΠΠ»ΡΠ½Π°Ρ€ on 21.04.2015.
  */
 public class Utils {
 
