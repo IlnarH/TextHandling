@@ -9,44 +9,33 @@ import java.util.List;
  */
 public class NGram {
 
-    private List<Token> words;
+    private List<String> words;
 
     private int occurrenceCount;
-
-    public NGram(Token... words) {
-        setWords(words);
-        occurrenceCount = 1;
-    }
 
     public NGram(String... words) {
         setWords(words);
         occurrenceCount = 1;
     }
 
-    public NGram(List<Token> words) {
-        this.words = new ArrayList<Token>(words);
+    public NGram(List<String> words) {
+        this.words = new ArrayList<String>(words);
         occurrenceCount = 1;
     }
 
-    public List<Token> getWords() {
+    public List<String> getWords() {
         return words;
     }
 
-    public Token getWord(Integer position) {
+    public String getWord(Integer position) {
         if (position >= words.size()) {
             throw new RuntimeException("Gram has not word at this position");
         }
         return words.get(position);
     }
 
-    public void setWords(Token... words) {
-        this.words = Arrays.asList(words);
-    }
     public void setWords(String... words) {
-        this.words = new ArrayList<Token>();
-        for (String word : words) {
-            this.words.add(new Token(word));
-        }
+        this.words = Arrays.asList(words);
     }
 
     public int getOccurrenceCount() {
@@ -60,8 +49,8 @@ public class NGram {
     @Override
     public String toString() {
         StringBuilder stringBuilder = new StringBuilder();
-        for (Token word : words) {
-            stringBuilder.append(word.getString());
+        for (String word : words) {
+            stringBuilder.append(word);
             stringBuilder.append(" ");
         }
         return stringBuilder.toString().trim();
