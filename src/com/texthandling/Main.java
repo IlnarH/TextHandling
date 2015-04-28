@@ -5,18 +5,14 @@ package com.texthandling;
  */
 public class Main {
 
-//    JUST FOR TESTING
-    public static String TEST_FIRST_WORD = "100";
-    public static String TEST_SECOND_WORD = "100";
-    public static String TEST_THIRD_WORD = "100";
-
-
     public static void main(String[] args) {
         LanguageModel languageModel = new LanguageModel();
         languageModel.create(null);
 
-        System.out.println("\n\n======================================================== RESULT ========================================================\n" +
-                languageModel.finishGram(/*TEST_FIRST_WORD + " " + TEST_SECOND_WORD + " ?????"*/
-                "100 ????? 100"));
+        System.out.println("\n\n" + languageModel.finishGram("мы UNKNOWN сообщить").toString());
+
+//        System.out.println("\n\n" + languageModel.generateSentence());
+
+//        System.out.println("\n\n" + languageModel.restoreOrder("– Еще я хотел просить вас,"));
     }
 }
