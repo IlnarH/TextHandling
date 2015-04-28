@@ -1,9 +1,11 @@
 package com.texthandling;
 
+import java.io.Serializable;
+
 /**
  * Created by œ¿’¿–‹ on 24.04.2015.
  */
-public class Token{
+public class Token implements Serializable{
 
     private TokenType condition;
     private String _string;

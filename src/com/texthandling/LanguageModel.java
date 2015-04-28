@@ -1,87 +1,44 @@
 package com.texthandling;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
-import java.io.File;
+import java.io.*;
 import java.util.*;
 
 /**
  * Created by Ильнар on 21.04.2015.
  */
-public class LanguageModel {
+public class LanguageModel implements Serializable {
 
     //    мерность n-граммов
-    public static int N = 3;
+    private int N = 3;
 
     //    список всех встречающихся слов
     Map<Token, Integer> wordMap = new LinkedHashMap<Token, Integer>();
 
     //    список всех n-граммов
-    Map<Long, NGram> grams = new HashMap<Long, NGram>();
+    public Map<Long, NGram> grams = new HashMap<Long, NGram>();
 
     public Coll baseCollection = new Coll();
+    public Coll invertedBaseCollection = new Coll();
 
-    public void create(String input) {
-//        String test = "a d d f g d b f d r s i f w f d b d b f s a f r s f h d s p";
+    public HashMap<Token, Coll> c1 = new HashMap<>();
+    public HashMap<Token, Coll> c2 = new HashMap<>();
 
 
-//        JUST CREATING TEST VALUES
-//==================================================================================================================//
-        String first = "";
-        String second = "";
-        String third = "";
-        int pp = -1;
-        int p = -1;
-        Random random = new Random();
-        StringBuilder builder = new StringBuilder();
-        for (int i = 0; i < 3000000; i++) {
-            int a = random.nextInt(30000) + 100;
-//            int a = i;
-            builder.append(a);
-//            System.out.print(a + " ");
-            if ((i + 1) % 50 == 0) {
-//                System.out.println();
-            }
-            builder.append(" ");
-            if (p == Integer.valueOf(Main.TEST_FIRST_WORD) && a == Integer.valueOf(Main.TEST_SECOND_WORD)) {
-                first += pp + " ";
-            }
-            if (pp == Integer.valueOf(Main.TEST_FIRST_WORD) && a == Integer.valueOf(Main.TEST_SECOND_WORD)) {
-                second += p + " ";
-            }
-            if (pp == Integer.valueOf(Main.TEST_FIRST_WORD) && p == Integer.valueOf(Main.TEST_SECOND_WORD)) {
-                third += a + " ";
-            }
-            pp = p;
-            p = a;
+    private LanguageModel(){}
+
+    private class NoSuchWordException extends RuntimeException {
+
+        public NoSuchWordException(String message) {
+            super(message);
         }
-
-//        System.out.println("\nIn test generation occurred words as first: " + (first.equals("") ? "none" : first));
-        System.out.println("\nIn test generation occurred words as second: " + (second.equals("") ? "none" : second));
-//        System.out.println("\nIn test generation occurred words as third: " + (third.equals("") ? "none" : third));
-//==================================================================================================================//
-
-
-        String test = builder.toString();
-        String[] words = test.split(" ");
-        ArrayList<Token> lst = new ArrayList<>();
-
-//        заполение списка слов
-        for (String word : words) {
-            if (!wordMap.containsKey(new Token(word))) {
-                wordMap.put(new Token(word), wordMap.size());
-            }
-            lst.add(new Token(word));
-        }
-//        построение модели
-        initGramsStruct(lst.toArray(new Token[lst.size()]));
-        System.out.println("\nLanguage model created");
     }
 
 
-    public static LanguageModel getNewLanguageModel(String input){
+    public static LanguageModel getNewLanguageModel(String input, int dimension){
         LanguageModel out = new LanguageModel();
 
-        String[] words = input.split("(?= - )|(?=[!#$%&'()*+,./:;<=>?@[\\\\]_`{|}~])|\\s+");
+        String[] words = input.split("(?= - )|(?=[!'()*+,.:;<=>?@[\\\\]_`])|\\s+");
         ArrayList<Token> lst = new ArrayList<>();
 
 //        заполение списка слов
@@ -94,23 +51,62 @@ public class LanguageModel {
 //        построение модели
         out.initGramsStruct(lst.toArray(new Token[lst.size()]));
         out.initGrams(words);
+        out.N = dimension;
         System.out.println("\nLanguage model created");
         return out;
     }
 
+    public static String getInput(File inputFile, String encodings) {
+        try {
+            BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(inputFile), encodings));
+            String out;
+            char[] cbuf = new char[((int) inputFile.length())];
+            int count = reader.read(cbuf);
+            out = new String(cbuf, 0, count);
+            return out;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     public static String getInput(File inputFile){
-        // not realised
-        throw new NotImplementedException();
+        return getInput(inputFile, "CP1251");
+    }
+
+
+    public void writeLanguageModel(File file) throws IOException{
+
+        if(!file.exists()){
+            file.createNewFile();
+        }
+        FileOutputStream fos = new FileOutputStream(file);
+        ObjectOutputStream oos = new ObjectOutputStream(fos);
+        oos.writeObject(this);
+        oos.flush();
+        oos.close();
+    }
+
+    public static LanguageModel readLanguageModel(File file) {
+        if(!file.exists()){
+            return null;
+        }
+        try {
+            FileInputStream fis = new FileInputStream(file);
+            ObjectInputStream ois = new ObjectInputStream(fis);
+            return (LanguageModel) ois.readObject();
+        } catch (Exception e){
+            return null;
+        }
+
     }
 
 
     /**
      * Завершает высказывание исходя из языковой модели (пустое слово помечено как '?????')
      *
-     * @param template
      * @return
      */
-    public String finishGram(String template) {
+   /* public String finishGram(String template) {
         NGram mostMatchingGram = null;
         for (NGram gram : getGramsByTemplate(template)) {
             if (mostMatchingGram == null) {
@@ -120,15 +116,13 @@ public class LanguageModel {
             }
         }
         return mostMatchingGram != null ? mostMatchingGram.toString() : "Gram not found";
-    }
+    }*/
 
     /**
      * Находит все n-граммы подходящие под данное высказывание
      *
-     * @param template
-     * @return
      */
-    private List<NGram> getGramsByTemplate(String template) {                            //Переделать, чтобы принимала на вход токены
+   /* private List<NGram> getGramsByTemplate(String template) {                            //Переделать, чтобы принимала на вход токены
         String[] words = template.split(" ");
         List<Token> lst = new LinkedList<>();
         for (String word : words) {
@@ -155,7 +149,7 @@ public class LanguageModel {
             }
         }
         return filteredGrams;
-    }
+    }*/
 
     //    todo harder logic (sentences)
     private void initGrams(String[] words) {
@@ -195,13 +189,28 @@ public class LanguageModel {
             gram.add(words[i]);
         }
         Coll[] cool = new Coll[N];
-        boolean flagContains = true;
+        Coll[] cool2 = new Coll[N];
         for (int i = N; i <= words.length; i++) {
             cool[0] = new Coll(gram.get(0), null);
+            cool2[0] = new Coll(gram.get(N - 1), null);
             for (int j = 1; j < N; j++) {
                 cool[j] = new Coll(gram.get(j), cool[j - 1]);
+                cool2[j] = new Coll(gram.get(N - j - 1), cool2[j - 1]);
             }
-            baseCollection.Unite(cool[N - 1]);
+//            if(c1.containsKey(cool[N - 1].getNode())){
+//                c1.get(cool[N - 1].getNode()).Unite(cool[N - 1]);
+//            } else {
+//                c1.put(cool[N - 1].getNode(), cool[N - 1]);
+//            }
+
+            if(c2.containsKey(cool2[N - 1].getNode())){
+                c2.get(cool2[N - 1].getNode()).Unite(cool2[N - 1]);
+            } else {
+                c2.put(cool2[N - 1].getNode(), cool2[N - 1]);
+            }
+
+//            baseCollection.Unite(cool[N - 1]);
+//            invertedBaseCollection.Unite(cool2[N - 1]);
 
             gram.remove(0);
 
@@ -216,7 +225,6 @@ public class LanguageModel {
     /**
      * Note: if template has unknown word, index of first gram matching the template will be returned
      *
-     * @param words
      * @return
      */
     private long getGramIndex(List<Token> words) {

@@ -1,5 +1,6 @@
 package com.texthandling;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -7,7 +8,7 @@ import java.util.List;
 /**
  * Created by Ильнар on 21.04.2015.
  */
-public class NGram {
+public class NGram implements Serializable {
 
     private List<Token> words;
 
