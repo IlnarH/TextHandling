@@ -43,7 +43,7 @@ public class LanguageModel {
         for (Map.Entry<String, Integer> entry : currencyMap.entrySet()) {
             wordMap.put(entry.getKey(), wordMap.size());
         }
-        wordMap.put(ANY_OTHER_WORD, wordMap.size());
+//        wordMap.put(ANY_OTHER_WORD, wordMap.size());
 
 
 
@@ -60,14 +60,50 @@ public class LanguageModel {
      */
     public NGram finishGram(String template) {
         NGram mostMatchingGram = null;
-        for (NGram gram : getGramsByTemplate(template)) {
+        for (NGram gram : getByTemplate(template)) {
             if (mostMatchingGram == null) {
                 mostMatchingGram = gram;
             } else if (gram.getOccurrenceCount() > mostMatchingGram.getOccurrenceCount()) {
                 mostMatchingGram = gram;
             }
         }
-        return mostMatchingGram;
+
+
+        List<String> l = ParseHelper.parse(template);
+        String[] words = new String[l.size()];
+        l.toArray(words);
+        int unknownWordPosition = -1;
+        int otherWordPosition = -1;
+        for (int i = 0; i < words.length; i++) {
+            if (words[i].equals(UNKNOWN_WORD)) {
+                if (unknownWordPosition == -1) {
+                    unknownWordPosition = i;
+//                break;
+                } else {
+                    otherWordPosition = i;
+                }
+            }
+        }
+        NGram nGram = new NGram();
+        if (unknownWordPosition == 0) {
+            if (otherWordPosition == -1) {
+                nGram.setWords(mostMatchingGram.getWord(0), words[1], words[2]);
+            } else if (otherWordPosition == 1) {
+                nGram.setWords(mostMatchingGram.getWord(0), mostMatchingGram.getWord(1), words[2]);
+            } else if (otherWordPosition == 2) {
+                nGram.setWords(mostMatchingGram.getWord(0), words[1], mostMatchingGram.getWord(2));
+            }
+        } else if (unknownWordPosition == 1) {
+            if (otherWordPosition == -1) {
+                nGram.setWords(words[0], mostMatchingGram.getWord(1), words[2]);
+            } else if (otherWordPosition == 2) {
+                nGram.setWords(words[0], mostMatchingGram.getWord(1), mostMatchingGram.getWord(2));
+            }
+        } else {
+            nGram.setWords(words[0], words[1], mostMatchingGram.getWord(2));
+        }
+        return nGram;
+
     }
 
     private String findWord(int index) {
@@ -160,7 +196,7 @@ public class LanguageModel {
 //            b = findWord(random.nextInt(wordMap.size() - 1));
             a = g.getWord(0);
             b = g.getWord(1);
-            if (/*Character.isUpperCase(a.charAt(0)) && */finishGram(a + " " + b + " " + UNKNOWN_WORD) != null) {
+            if (Character.isUpperCase(a.charAt(0)) && finishGram(a + " " + b + " " + UNKNOWN_WORD) != null) {
                 break;
             }
         }
@@ -177,13 +213,7 @@ public class LanguageModel {
         return sentence;
     }
 
-    /**
-     * Находит все n-граммы подходящие под данное высказывание
-     *
-     * @param template
-     * @return
-     */
-    private List<NGram> getGramsByTemplate(String template) {
+    private List<NGram> getByTemplate(String template) {
         List<String> l = ParseHelper.parse(template);
         String[] words = new String[l.size()];
         l.toArray(words);
@@ -194,15 +224,82 @@ public class LanguageModel {
                 break;
             }
         }
+        List<NGram> result = getGramsByTemplate(template);
+        if (result.isEmpty()) {
+            if (unknownWordPosition == 0) {
+                result = getGramsByTemplate(UNKNOWN_WORD + " " + UNKNOWN_WORD + " " + words[2]);
+                if (result.isEmpty()) {
+                    return getGramsByTemplate(UNKNOWN_WORD + " " + words[1] + " " + UNKNOWN_WORD);
+                } else {
+                    return result;
+                }
+            } else if (unknownWordPosition == 1) {
+                result = getGramsByTemplate(UNKNOWN_WORD + " " + UNKNOWN_WORD + " " + words[2]);
+                if (result.isEmpty()) {
+                    return getGramsByTemplate(words[0] + " " + UNKNOWN_WORD + " " + UNKNOWN_WORD);
+                } else {
+                    return result;
+                }
+            } else {
+                result = getGramsByTemplate(words[0] + " " + UNKNOWN_WORD + " " + UNKNOWN_WORD);
+                if (result.isEmpty()) {
+                    return getGramsByTemplate(UNKNOWN_WORD + " " + words[1] + " " + UNKNOWN_WORD);
+                } else {
+                    return result;
+                }
+            }
+        } else {
+            return result;
+        }
+    }
+
+    /**
+     * Находит все n-граммы подходящие под данное высказывание
+     *
+     * @param template
+     * @return
+     */
+    private List<NGram> getGramsByTemplate(String template) {
+        List<String> l = ParseHelper.parse(template);
+        String[] words = new String[l.size()];
+        l.toArray(words);
+        int unknownWordPosition = -1;
+        int otherWordPosition = -1;
+        for (int i = 0; i < words.length; i++) {
+            if (words[i].equals(UNKNOWN_WORD)) {
+                if (unknownWordPosition == -1) {
+                    unknownWordPosition = i;
+//                break;
+                } else {
+                    otherWordPosition = i;
+                }
+            }
+        }
 
         List<NGram> filteredGrams = new ArrayList<NGram>();
-        long firstMatchingGram = getGramIndex(Arrays.asList(words));
+        long firstMatchingGram;
+        try {
+            firstMatchingGram = getGramIndex(Arrays.asList(words));
+        } catch (NoSuchWordException e) {
+            return Collections.EMPTY_LIST;
+        }
         long digit = Utils.pow(wordMap.size(), unknownWordPosition);
+        long otherDigit = Utils.pow(wordMap.size(), otherWordPosition);
         for (int i = 0; i < wordMap.size(); i++) {
-            if (grams.containsKey(firstMatchingGram + i * digit)) {
-                NGram foundGram = grams.get(firstMatchingGram + i * digit);
-                filteredGrams.add(foundGram);
-                //System.out.println("----> " + foundGram + ", occurrence - " + foundGram.getOccurrenceCount());
+            if (otherWordPosition == -1) {
+                if (grams.containsKey(firstMatchingGram + i * digit)) {
+                    NGram foundGram = grams.get(firstMatchingGram + i * digit);
+                    filteredGrams.add(foundGram);
+                    //System.out.println("----> " + foundGram + ", occurrence - " + foundGram.getOccurrenceCount());
+                }
+            } else {
+                for (int j = 0; j < wordMap.size(); j++) {
+                    if (grams.containsKey(firstMatchingGram + i * digit + j * otherDigit)) {
+                        NGram foundGram = grams.get(firstMatchingGram + i * digit + j * otherDigit);
+                        filteredGrams.add(foundGram);
+                        //System.out.println("----> " + foundGram + ", occurrence - " + foundGram.getOccurrenceCount());
+                    }
+                }
             }
         }
         return filteredGrams;
@@ -252,9 +349,9 @@ public class LanguageModel {
                 index += wordMap.get(word) * Utils.pow(wordMap.size(), n);
             } catch (NullPointerException e) {
 //                todo not exists
-//                throw new NoSuchWordException("Word '" + word + "' doesn't exist in language model");
+                throw new NoSuchWordException("Word '" + word + "' doesn't exist in language model");
 
-                index += wordMap.get(ANY_OTHER_WORD) * Utils.pow(wordMap.size(), n);
+//                index += wordMap.get(ANY_OTHER_WORD) * Utils.pow(wordMap.size(), n);
             }
             n++;
         }

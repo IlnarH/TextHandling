@@ -9,10 +9,10 @@ public class Main {
         LanguageModel languageModel = new LanguageModel();
         languageModel.create(null);
 
-        System.out.println("\n\n" + languageModel.finishGram("мы UNKNOWN сообщить").toString());
+//        System.out.println("\n\n" + languageModel.finishGram("мы UNKNOWN сообщить").toString());
 
-//        System.out.println("\n\n" + languageModel.generateSentence());
+        System.out.println("\n\n" + languageModel.generateSentence());
 
-//        System.out.println("\n\n" + languageModel.restoreOrder("– Еще я хотел просить вас,"));
+        System.out.println("\n\n" + languageModel.restoreOrder("привычке подействовало тревожно физически"));
     }
 }
