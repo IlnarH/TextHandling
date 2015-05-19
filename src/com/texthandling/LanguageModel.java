@@ -1,11 +1,12 @@
 package com.texthandling;
 
+import java.io.*;
 import java.util.*;
 
 /**
  * Created by Ильнар on 21.04.2015.
  */
-public class LanguageModel {
+public class LanguageModel implements Serializable {
 
     public static String UNKNOWN_WORD = "UNKNOWN";
     public static String ANY_OTHER_WORD = "ANY";
@@ -20,10 +21,97 @@ public class LanguageModel {
     //    список всех n-граммов
     Map<Long, NGram> grams = new HashMap<Long, NGram>();
 
-
     private Map<List<String>, Float> combinations = new HashMap<List<String>, Float>();
 
-    public void create(String input) {
+    private LanguageModel(){}
+
+
+    public static LanguageModel getNewLanguageModel(String input, int dimension){
+        LanguageModel out = new LanguageModel();
+
+        List<String> sequence = ParseHelper.parse(input);
+
+        for(int i = 1; i < 100; ++i){
+            System.out.println(sequence.get(sequence.size() * i/100));
+
+        }
+
+//        заполение списка слов
+        Map<String, Integer> currencyMap = new HashMap<String, Integer>();
+        for (String s : sequence) {
+            if (currencyMap.containsKey(s)) {
+                currencyMap.put(s, currencyMap.get(s) + 1);
+            } else {
+                currencyMap.put(s, 1);
+            }
+        }
+        for (Map.Entry<String, Integer> entry : currencyMap.entrySet()) {
+            out.wordMap.put(entry.getKey(), out.wordMap.size());
+        }
+//        wordMap.put(ANY_OTHER_WORD, wordMap.size());
+        out.N = dimension;
+
+
+
+//        построение модели
+        out.initGrams(sequence);
+        System.out.println("\nLanguage model with " + sequence.size() + " words, " + out.wordMap.size() + " unique words and " + out.grams.size() +  " unique N-grams created");
+
+
+        return out;
+    }
+
+    public static String getInput(File inputFile, String encodings) {
+        try {
+            BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(inputFile), encodings));
+            String out;
+            char[] cbuf = new char[((int) inputFile.length())];
+            int count = reader.read(cbuf);
+            out = new String(cbuf, 0, count);
+            return out;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    public static String getInput(File inputFile){
+        return getInput(inputFile, "CP1251");
+    }
+
+
+    public void writeLanguageModel(File file) throws IOException {
+
+        if(!file.exists()){
+            file.createNewFile();
+        }
+        FileOutputStream fos = new FileOutputStream(file);
+        ObjectOutputStream oos = new ObjectOutputStream(fos);
+        oos.writeObject(this);
+        oos.flush();
+        oos.close();
+        System.out.println("Wroten!");
+    }
+
+    public static LanguageModel readLanguageModel(File file) {
+        if(!file.exists()){
+            return null;
+        }
+        try {
+            FileInputStream fis = new FileInputStream(file);
+            ObjectInputStream ois = new ObjectInputStream(fis);
+            LanguageModel lm = (LanguageModel) ois.readObject();
+            System.out.println("Read!");
+            return lm;
+        } catch (Exception e){
+            return null;
+        }
+
+    }
+
+
+
+
+    private void create(String input) {
 
         //todo init
         String inputString = "";
@@ -104,6 +192,7 @@ public class LanguageModel {
         }
         return nGram;
 
+
     }
 
     private String findWord(int index) {
@@ -180,7 +269,7 @@ public class LanguageModel {
         }
     }
 
-    public String generateSentence() {
+    public String  generateSentence() {
         Random random = new Random();
         String a;
         String b;
