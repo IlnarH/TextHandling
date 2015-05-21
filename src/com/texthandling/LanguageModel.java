@@ -31,10 +31,6 @@ public class LanguageModel implements Serializable {
 
         List<String> sequence = ParseHelper.parse(input);
 
-        for(int i = 1; i < 100; ++i){
-            System.out.println(sequence.get(sequence.size() * i/100));
-
-        }
 
 //        заполение списка слов
         Map<String, Integer> currencyMap = new HashMap<String, Integer>();
